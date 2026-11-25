@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# generated data
+task-03-priority-queue/data/random.jsonl
+
+# editors
+.vscode/
+.idea/
