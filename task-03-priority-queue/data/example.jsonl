@@ -1,0 +1,9 @@
+{"cmd": "SET", "id": "a", "at": 5}
+{"cmd": "SET", "id": "b", "at": 3}
+{"cmd": "SET", "id": "c", "at": 5}
+{"cmd": "ADVANCE", "to": 5}
+{"cmd": "SET", "id": "a", "at": 8}
+{"cmd": "CANCEL", "id": "c"}
+{"cmd": "SET", "id": "d", "at": 7}
+{"cmd": "ADVANCE", "to": 7}
+{"cmd": "ADVANCE", "to": 9}
