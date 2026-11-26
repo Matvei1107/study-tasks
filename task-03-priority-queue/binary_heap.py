@@ -1,15 +1,21 @@
 """Своя бинарная куча на массиве (без heapq и готовых куч).
 
-Поддерживает направление min-heap / max-heap и произвольный ключ (key),
-по которому сравниваются элементы. Данные лежат в списке, индекс 0 - вершина.
+Поддерживает:
+- направление min-heap / max-heap;
+- произвольный ключ (key), по которому сравниваются элементы.
+
+Основные операции: push, pop, size, peek, replace_top, heapify.
+Внутри данные лежат в списке, индекс 0 - вершина кучи.
 """
 
 
 class BinaryHeap:
-    def __init__(self, min_heap=True, key=None):
-        self._data = []
+    def __init__(self, items=None, min_heap=True, key=None):
+        self._data = list(items) if items is not None else []
         self._min_heap = min_heap
         self._key = key if key is not None else (lambda x: x)
+        if self._data:
+            self.heapify()
 
     # --- сравнение элементов ---
     def _before(self, a, b):
@@ -78,8 +84,35 @@ class BinaryHeap:
             raise IndexError("peek у пустой кучи")
         return self._data[0]
 
+    def replace_top(self, item):
+        """Заменить вершину новым элементом и восстановить кучу за O(log n)."""
+        if not self._data:
+            raise IndexError("replace_top у пустой кучи")
+        top = self._data[0]
+        self._data[0] = item
+        self._sift_down(0)
+        return top
+
+    def heapify(self):
+        """Построить кучу на месте за O(n): просеиваем вниз от середины к началу."""
+        n = len(self._data)
+        for i in range(n // 2 - 1, -1, -1):
+            self._sift_down(i)
+
     def size(self):
         return len(self._data)
 
     def is_empty(self):
         return not self._data
+
+    def check_invariant(self):
+        """Проверка свойства кучи: любой родитель не хуже своих детей."""
+        n = len(self._data)
+        for i in range(n):
+            left = self._left(i)
+            right = self._right(i)
+            if left < n and self._before(self._data[left], self._data[i]):
+                return False
+            if right < n and self._before(self._data[right], self._data[i]):
+                return False
+        return True
