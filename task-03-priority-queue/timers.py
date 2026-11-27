@@ -63,3 +63,13 @@ class TimerService:
     @property
     def time(self):
         return self._time
+
+    def active_count(self):
+        return len(self._active)
+
+    def heap_size(self):
+        return self._heap.size()
+
+    def stale_count(self):
+        # сколько назначений в куче уже неактуальны и ждут отсева
+        return self._heap.size() - len(self._active)
