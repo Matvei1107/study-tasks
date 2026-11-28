@@ -1,9 +1,35 @@
-"""Тесты логики варианта 6."""
+"""Тесты логики варианта 6 и сверка с эталоном."""
 
+import random
 import unittest
 
 from main import run
 from timers import TimerService
+
+
+class ReferenceTimers:
+    """Эталон: словарь активных назначений, фильтрация и сортировка при ADVANCE."""
+
+    def __init__(self):
+        self._active = {}   # id -> (at, seq)
+        self._time = 0
+        self._next_seq = 0
+
+    def set(self, timer_id, at):
+        self._active[timer_id] = (at, self._next_seq)
+        self._next_seq += 1
+
+    def cancel(self, timer_id):
+        self._active.pop(timer_id, None)
+
+    def advance(self, to):
+        self._time = to
+        due = [(at, seq, timer_id) for timer_id, (at, seq) in self._active.items() if at <= to]
+        due.sort()
+        fired = [(timer_id, at) for at, seq, timer_id in due]
+        for timer_id, _ in fired:
+            del self._active[timer_id]
+        return fired
 
 
 class TestTimerService(unittest.TestCase):
@@ -140,6 +166,43 @@ class TestHeapSizeAccounting(unittest.TestCase):
         service.set("b", 5)
         self.assertEqual(service.active_count(), 2)
         self.assertEqual(service.heap_size(), 11)
+
+
+class TestAgainstReference(unittest.TestCase):
+    @staticmethod
+    def random_commands(rng, count):
+        ids = ["a", "b", "c", "d"]
+        current = 0
+        commands = []
+        for _ in range(count):
+            roll = rng.random()
+            if roll < 0.5:
+                at = rng.randint(current, current + 8)
+                commands.append(("SET", rng.choice(ids), at))
+            elif roll < 0.7:
+                commands.append(("CANCEL", rng.choice(ids), None))
+            else:
+                to = rng.randint(current, current + 8)
+                current = to
+                commands.append(("ADVANCE", None, to))
+        return commands
+
+    def test_matches_reference_on_random_input(self):
+        for seed in range(20):
+            rng = random.Random(seed)
+            commands = self.random_commands(rng, 120)
+            service = TimerService()
+            reference = ReferenceTimers()
+            for kind, first, second in commands:
+                if kind == "SET":
+                    service.set(first, second)
+                    reference.set(first, second)
+                elif kind == "CANCEL":
+                    service.cancel(first)
+                    reference.cancel(first)
+                else:
+                    self.assertEqual(service.advance(second), reference.advance(second))
+            self.assertEqual(service.active_count(), len(reference._active))
 
 
 class TestCliRun(unittest.TestCase):
